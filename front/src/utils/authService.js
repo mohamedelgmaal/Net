@@ -1,141 +1,130 @@
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api/v1"
+const API_URL = "/api/auth";
+
+// Common request handler
+const authRequest = async (endpoint, options = {}) => {
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const error = new Error(
+      data.message || "Something went wrong"
+    );
+
+    error.status = response.status;
+    error.data = data;
+
+    throw error;
+  }
+
+  return data;
+};
+
+// Google configuration request
+const getGoogleClientId = async () => {
+  const response = await fetch("/api/config/google", {
+    method: "GET",
+    credentials: "include",
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || !data.success || !data.clientId) {
+    throw new Error(
+      data.message || "Unable to load Google authentication"
+    );
+  }
+
+  return data.clientId;
+};
 
 export const authService = {
-  // User Registration
-  register: async (userData) => {
-    try {
-      const response = await fetch(`${API_URL}/user/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(userData),
-        credentials: "include", // Include cookies
-      })
+  // Register
+  register: (userData) =>
+    authRequest("/register", {
+      method: "POST",
+      body: JSON.stringify({
+        fullName: userData.fullName,
+        email: userData.email,
+        password: userData.password,
+      }),
+    }),
 
-      const data = await response.json()
+  // Login
+  login: (email, password) =>
+    authRequest("/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
 
-      if (!response.ok) {
-        throw new Error(data.message || "Registration failed")
-      }
+  // Google Login
+  googleLogin: (credential) =>
+    authRequest("/google", {
+      method: "POST",
+      body: JSON.stringify({ credential }),
+    }),
 
-      // Store token securely
-      if (data.token) {
-        localStorage.setItem("authToken", data.token)
-        sessionStorage.setItem("authToken", data.token)
-      }
+  // Get Google Client ID
+  getGoogleClientId,
 
-      if (data.user) {
-        localStorage.setItem("userInfo", JSON.stringify(data.user))
-      }
+  // Verify Email OTP
+  verifyEmail: (email, code) =>
+    authRequest("/verify-email", {
+      method: "POST",
+      body: JSON.stringify({ email, code }),
+    }),
 
-      return data
-    } catch (error) {
-      console.error("Registration error:", error)
-      throw error
-    }
-  },
+  // Resend Verification OTP
+  resendVerification: (email) =>
+    authRequest("/resend-verification", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }),
 
-  // User Login
-  login: async (email, password) => {
-    try {
-      const response = await fetch(`${API_URL}/user/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-        credentials: "include",
-      })
+  // Forgot Password
+  forgotPassword: (email) =>
+    authRequest("/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }),
 
-      const data = await response.json()
+  // Reset Password
+  resetPassword: (email, code, newPassword) =>
+    authRequest("/reset-password", {
+      method: "POST",
+      body: JSON.stringify({
+        email,
+        code,
+        newPassword,
+      }),
+    }),
 
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed")
-      }
+  // Logout
+  logout: () =>
+    authRequest("/logout", {
+      method: "GET",
+    }),
 
-      // Store token securely
-      if (data.token) {
-        localStorage.setItem("authToken", data.token)
-        sessionStorage.setItem("authToken", data.token)
-      }
+  // Get Current Authenticated User
+  getCurrentUser: () =>
+    authRequest("/me", {
+      method: "GET",
+    }),
+};
 
-      if (data.user) {
-        localStorage.setItem("userInfo", JSON.stringify(data.user))
-      }
-
-      return data
-    } catch (error) {
-      console.error("Login error:", error)
-      throw error
-    }
-  },
-
-  // User Logout
-  logout: async () => {
-    try {
-      const token = localStorage.getItem("authToken")
-
-      await fetch(`${API_URL}/user/logout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
-      })
-
-      // Clear storage
-      localStorage.removeItem("authToken")
-      localStorage.removeItem("userInfo")
-      sessionStorage.removeItem("authToken")
-      sessionStorage.removeItem("userInfo")
-
-      return true
-    } catch (error) {
-      console.error("Logout error:", error)
-      // Clear storage even if logout request fails
-      localStorage.removeItem("authToken")
-      localStorage.removeItem("userInfo")
-      sessionStorage.removeItem("authToken")
-      sessionStorage.removeItem("userInfo")
-      return false
-    }
-  },
-
-  // Get current user
-  getCurrentUser: async () => {
-    try {
-      const token = localStorage.getItem("authToken")
-      if (!token) return null
-
-      const response = await fetch(`${API_URL}/user/me`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to get current user")
-      }
-
-      const data = await response.json()
-      localStorage.setItem("userInfo", JSON.stringify(data.user))
-      return data.user
-    } catch (error) {
-      console.error("Get current user error:", error)
-      return null
-    }
-  },
-}
-
-export const getAuthToken = () => {
-  return localStorage.getItem("authToken") || sessionStorage.getItem("authToken")
-}
-
-export const isAuthenticated = () => {
-  return !!getAuthToken()
-}
+// Check Authentication
+export const isAuthenticated = async () => {
+  try {
+    const data = await authService.getCurrentUser();
+    return Boolean(data.success && data.user);
+  } catch {
+    return false;
+  }
+};

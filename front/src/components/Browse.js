@@ -1,40 +1,30 @@
-"use client"
+import Header from "./Header";
+import { useSelector } from "react-redux";
 
-import { useEffect } from "react"
-import Header from "./Header"
-import { useSelector } from "react-redux"
-import { useNavigate } from "react-router-dom"
-import MainContainer from "./MainContainer"
-import MovieContainer from "./MovieContainer"
-import useNowPlayingMovies from "../hooks/useNowPlayingMovies"
-import usePopularMovies from "../hooks/usePopularMovies"
-import useTopRatedMovies from "../hooks/useTopRatedMovies"
-import useUpcomingMovies from "../hooks/useUpcomingMovies"
-import SearchMovie from "./SearchMovie"
+import MainContainer from "./MainContainer";
+import MovieContainer from "./MovieContainer";
+
+import useNowPlayingMovies from "../hooks/useNowPlayingMovies";
+import usePopularMovies from "../hooks/usePopularMovies";
+import useTopRatedMovies from "../hooks/useTopRatedMovies";
+import useUpcomingMovies from "../hooks/useUpcomingMovies";
+
+import SearchMovie from "./SearchMovie";
 
 const Browse = () => {
-  const user = useSelector((store) => store.app.user)
-  const toggle = useSelector((store) => store.movie.toggle)
-  const navigate = useNavigate()
+  const toggle = useSelector((store) => store.movie.toggle);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("userInfo") || localStorage.getItem("user")
-
-    if (!user && !storedUser && window.location.pathname !== "/") {
-      navigate("/")
-    }
-  }, [user, navigate])
-
-  // Load all movies
-  useNowPlayingMovies()
-  usePopularMovies()
-  useTopRatedMovies()
-  useUpcomingMovies()
+  // Load movies
+  useNowPlayingMovies();
+  usePopularMovies();
+  useTopRatedMovies();
+  useUpcomingMovies();
 
   return (
-    <div>
+    <div className="min-h-screen w-full overflow-x-hidden bg-black">
       <Header />
-      <div>
+
+      <main className="min-h-screen w-full">
         {toggle ? (
           <SearchMovie />
         ) : (
@@ -43,9 +33,9 @@ const Browse = () => {
             <MovieContainer />
           </>
         )}
-      </div>
+      </main>
     </div>
-  )
-}
+  );
+};
 
-export default Browse
+export default Browse;

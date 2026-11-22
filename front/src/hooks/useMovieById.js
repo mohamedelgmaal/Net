@@ -1,34 +1,76 @@
-"use client"
+import axios from "axios";
+import { useDispatch } from "react-redux";
+import {
+  getMainTrailerMovie,
+  getDialogTrailerMovie,
+} from "../redux/movieSlice";
+import { useEffect } from "react";
 
-import axios from "axios"
-import { options } from "../utils/constant"
-import { useDispatch } from "react-redux"
-import { getTrailerMovie } from "../redux/movieSlice"
-import { useEffect } from "react"
-
-// Hook to fetch movie trailer by ID and dispatch it to Redux
-const useMovieById = (movieId) => {
-  const dispatch = useDispatch()
+const useMovieById = (movieId, isDialog = false) => {
+  const dispatch = useDispatch();
 
   useEffect(() => {
+    const setTrailer = isDialog
+      ? getDialogTrailerMovie
+      : getMainTrailerMovie;
+
+    if (!movieId) {
+      dispatch(setTrailer(null));
+      return;
+    }
+
+    const controller = new AbortController();
+
     const getMovieById = async () => {
+      dispatch(setTrailer(null));
+
       try {
-        const res = await axios.get(`https://api.themoviedb.org/3/movie/${movieId}/videos`, options)
+        const res = await axios.get(
+          `/api/movies/${movieId}/videos`,
+          {
+            signal: controller.signal,
+          }
+        );
 
-        console.log(res.data.results)
+        const videos = Array.isArray(res?.data?.results)
+          ? res.data.results
+          : [];
 
-        const trailer = res?.data?.results?.filter((item) => item.type === "Trailer")
+        const trailer =
+          videos.find(
+            (item) =>
+              item.type === "Trailer" &&
+              item.site === "YouTube" &&
+              item.key
+          ) ||
+          videos.find(
+            (item) => item.site === "YouTube" && item.key
+          ) ||
+          null;
 
-        dispatch(getTrailerMovie(trailer.length > 0 ? trailer[0] : res.data.results[0]))
+        if (!controller.signal.aborted) {
+          dispatch(setTrailer(trailer));
+        }
       } catch (error) {
-        console.error("Error fetching movie by ID:", error)
+        if (error.code !== "ERR_CANCELED") {
+          console.error(
+            "Error fetching movie videos:",
+            error.response?.data || error.message
+          );
+
+          if (!controller.signal.aborted) {
+            dispatch(setTrailer(null));
+          }
+        }
       }
-    }
+    };
 
-    if (movieId) {
-      getMovieById()
-    }
-  }, [movieId, dispatch])
-}
+    getMovieById();
 
-export default useMovieById
+    return () => {
+      controller.abort();
+    };
+  }, [movieId, isDialog, dispatch]);
+};
+
+export default useMovieById;

@@ -1,15 +1,40 @@
 import axios from "axios";
-import { getTopRatedMovie } from "../redux/movieSlice";
-import { Top_Rated_Movie, options } from "../utils/constant";
-import {useDispatch} from "react-redux";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
 
-const useTopRatedMovies = async () => {
-    const dispatch = useDispatch();
-    try {
-        const res = await axios.get(Top_Rated_Movie, options);
-        dispatch(getTopRatedMovie(res.data.results));
-    } catch (error) {
-        console.log(error);
-    }
-}
+import { getTopRatedMovie } from "../redux/movieSlice";
+
+const useTopRatedMovies = () => {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchTopRatedMovies = async () => {
+      try {
+        const res = await axios.get("/api/movies/top_rated", {
+          signal: controller.signal,
+        });
+
+        if (res.data.success) {
+          dispatch(getTopRatedMovie(res.data.results));
+        }
+      } catch (error) {
+        if (error.code === "ERR_CANCELED") return;
+
+        console.error(
+          "Error fetching top rated movies:",
+          error.response?.data || error.message
+        );
+      }
+    };
+
+    fetchTopRatedMovies();
+
+    return () => {
+      controller.abort();
+    };
+  }, [dispatch]);
+};
+
 export default useTopRatedMovies;

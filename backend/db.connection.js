@@ -1,15 +1,18 @@
 import mongoose from "mongoose";
-import dotenv from 'dotenv'
 
-dotenv.config({
-    path:'./.env'
-})
-  const dbConnection = ()=> {
-    mongoose.connect(process.env.MONGO_URL).then(()=>{
-        console.log("db connected Successfully ");
-    }).catch((err)=>{
-        console.log(err);
+const dbConnection = async () => {
+  try {
+    if (!process.env.MONGO_URL) {
+      throw new Error("MONGO_URL is missing in .env");
+    }
 
-    })      
-}
+    await mongoose.connect(process.env.MONGO_URL);
+
+    console.log("MongoDB connected successfully");
+  } catch (err) {
+    console.error("MongoDB connection error:", err.message);
+    throw err;
+  }
+};
+
 export default dbConnection;
