@@ -1,6 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import {
+  Mail,
+  LockKeyhole,
+  Eye,
+  EyeOff,
+} from "lucide-react";
+
 import Header from "./Header";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +19,7 @@ import { authService } from "../utils/authService";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -152,6 +160,7 @@ const Login = () => {
     };
   }, [dispatch, navigate]);
 
+  // Login Handler
   const loginHandler = async (e) => {
     e.preventDefault();
 
@@ -182,8 +191,19 @@ const Login = () => {
       dispatch(setLoading(false));
       setEmail("");
       setPassword("");
+      setShowPassword(false);
     }
   };
+
+  // Input Styling
+  const inputClass =
+    "w-full rounded-md border border-gray-700 bg-gray-800/90 py-3.5 pl-12 pr-12 text-base text-white placeholder-gray-400 outline-none transition duration-300 focus:border-red-600 focus:ring-1 focus:ring-red-600";
+
+  const iconClass =
+    "pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400";
+
+  const eyeButtonClass =
+    "absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 transition hover:text-white focus:outline-none";
 
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden bg-black">
@@ -202,119 +222,122 @@ const Login = () => {
 
       {/* Login Form */}
       <div className="relative z-10 flex min-h-[calc(100vh-70px)] w-full items-center justify-center px-4 py-8 sm:px-6">
-        <form
-          onSubmit={loginHandler}
-          className="
-            flex w-full max-w-md
-            flex-col items-center
-            rounded-lg bg-black/85
-            px-6 py-10
-            shadow-2xl
-            sm:px-10 sm:py-12
-            md:max-w-lg md:px-14
-          "
-        >
-          <h1 className="mb-7 text-3xl font-bold text-white sm:text-4xl">
-            Login
-          </h1>
 
-          <div className="flex w-full flex-col">
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              type="email"
-              placeholder="Email"
-              autoComplete="email"
-              className="
-                my-2 w-full rounded-md
-                border border-gray-600
-                bg-gray-800 px-4 py-3.5
-                text-base text-white
-                outline-none
-                transition
-                focus:border-red-600
-                focus:ring-1 focus:ring-red-600
-              "
-              required
-            />
+        {/* Animated Neon Border */}
+        <div className="register-neon-card w-full max-w-md md:max-w-lg">
 
-            <input
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              type="password"
-              placeholder="Password"
-              autoComplete="current-password"
-              className="
-                my-2 w-full rounded-md
-                border border-gray-600
-                bg-gray-800 px-4 py-3.5
-                text-base text-white
-                outline-none
-                transition
-                focus:border-red-600
-                focus:ring-1 focus:ring-red-600
-              "
-              required
-            />
+          <form
+            onSubmit={loginHandler}
+            className="relative z-10 flex w-full flex-col items-center rounded-[10px] bg-black/95 px-6 py-10 shadow-2xl sm:px-10 sm:py-12 md:px-14"
+          >
+            <h1 className="mb-7 text-3xl font-bold text-white sm:text-4xl">
+              Login
+            </h1>
 
-            <div className="mt-2 flex justify-end">
+            <div className="flex w-full flex-col">
+
+              {/* Email */}
+              <div className="relative my-2 w-full">
+                <Mail className={iconClass} />
+
+                <input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  type="email"
+                  placeholder="Email"
+                  autoComplete="email"
+                  className={inputClass}
+                  required
+                />
+              </div>
+
+              {/* Password */}
+              <div className="relative my-2 w-full">
+                <LockKeyhole className={iconClass} />
+
+                <input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  autoComplete="current-password"
+                  className={inputClass}
+                  required
+                />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowPassword((prev) => !prev)
+                  }
+                  className={eyeButtonClass}
+                  aria-label={
+                    showPassword ? "Hide password" : "Show password"
+                  }
+                  aria-pressed={showPassword}
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} />
+                  ) : (
+                    <Eye size={20} />
+                  )}
+                </button>
+              </div>
+
+              {/* Forgot Password */}
+              <div className="mt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => navigate("/forgot-password")}
+                  className="text-sm text-gray-300 transition hover:text-white hover:underline"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+
+              {/* Login Button */}
               <button
-                type="button"
-                onClick={() => navigate("/forgot-password")}
-                className="text-sm text-gray-300 transition hover:text-white hover:underline"
+                type="submit"
+                disabled={isLoading}
+                className="mt-6 w-full rounded-md bg-red-600 p-3.5 text-base font-bold text-white transition duration-300 hover:bg-red-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Forgot Password?
+                {isLoading ? "Logging in..." : "Login"}
               </button>
+
+              {/* Divider */}
+              <div className="my-6 flex items-center gap-4">
+                <div className="h-px flex-1 bg-gray-600" />
+
+                <span className="text-sm text-gray-400">
+                  OR
+                </span>
+
+                <div className="h-px flex-1 bg-gray-600" />
+              </div>
+
+              {/* Google Login */}
+              <div className="flex w-full justify-center">
+                <div
+                  id="google-login-button"
+                  className="min-h-[44px] max-w-full"
+                />
+              </div>
+
+              {/* Register Link */}
+              <p className="mt-6 text-center text-sm text-gray-300 sm:text-base">
+                New to Netflix?
+
+                <span
+                  onClick={() => navigate("/register")}
+                  className="ml-2 cursor-pointer font-bold text-red-500 hover:text-red-400 hover:underline"
+                >
+                  Sign up now.
+                </span>
+              </p>
+
             </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="
-                mt-6 w-full rounded-md
-                bg-red-600 p-3.5
-                text-base font-bold text-white
-                transition duration-300
-                hover:bg-red-700
-                active:scale-[0.98]
-                disabled:cursor-not-allowed
-                disabled:opacity-60
-              "
-            >
-              {isLoading ? "Logging in..." : "Login"}
-            </button>
-
-            {/* Divider */}
-            <div className="my-6 flex items-center gap-4">
-              <div className="h-px flex-1 bg-gray-600" />
-
-              <span className="text-sm text-gray-400">
-                OR
-              </span>
-
-              <div className="h-px flex-1 bg-gray-600" />
-            </div>
-
-            {/* Google Login */}
-            <div className="flex w-full justify-center">
-              <div
-                id="google-login-button"
-                className="min-h-[44px] max-w-full"
-              />
-            </div>
-
-            <p className="mt-6 text-center text-sm text-gray-300 sm:text-base">
-              New to Netflix?
-
-              <span
-                onClick={() => navigate("/register")}
-                className="ml-2 cursor-pointer font-bold text-white hover:underline"
-              >
-                Sign up now.
-              </span>
-            </p>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );

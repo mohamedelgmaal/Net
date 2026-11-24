@@ -73,3 +73,82 @@ code {
     scrollbar-width: none;
   }
 }
+/* ==============================
+   NETFLIX NEON REGISTER BORDER
+============================== */
+
+.register-neon-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 13px;
+  padding: 1.5px;
+
+  box-shadow:
+    0 0 12px rgba(229, 9, 20, 0.22),
+    0 0 28px rgba(229, 9, 20, 0.12);
+}
+
+/* Rotating Neon Light */
+.register-neon-card::before {
+  content: "";
+  position: absolute;
+  inset: -100%;
+
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 250deg,
+    #e50914 285deg,
+    #ff1744 310deg,
+    #a855f7 335deg,
+    transparent 360deg
+  );
+
+  animation: registerNeonSpin 5s linear infinite;
+  z-index: 0;
+}
+
+/* Neon Rotation */
+@keyframes registerNeonSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Soft Neon Glow */
+@media (prefers-reduced-motion: no-preference) {
+  .register-neon-card {
+    animation: registerNeonGlow 3s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes registerNeonGlow {
+  from {
+    box-shadow:
+      0 0 10px rgba(229, 9, 20, 0.18),
+      0 0 22px rgba(229, 9, 20, 0.10);
+  }
+
+  to {
+    box-shadow:
+      0 0 17px rgba(229, 9, 20, 0.38),
+      0 0 35px rgba(168, 85, 247, 0.18);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .register-neon-card::before {
+    animation: none;
+    background: linear-gradient(
+      135deg,
+      #e50914,
+      #a855f7,
+      #e50914
+    );
+  }
+}
